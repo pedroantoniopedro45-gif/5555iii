@@ -1,0 +1,58 @@
+```yaml
+name: Gerar APK Android
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Compilar APK de teste
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Obter código do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Instalar dependências
+        run: npm install
+
+      - name: Compilar aplicação web
+        run: npm run build
+
+      - name: Sincronizar Capacitor com Android
+        run: npx cap sync android
+
+      - name: Preparar Gradle
+        working-directory: android
+        run: chmod +x gradlew
+
+      - name: Compilar APK de teste
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Guardar APK gerado
+        uses: actions/upload-artifact@v4
+        with:
+          name: APK-Android-Teste
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+```
